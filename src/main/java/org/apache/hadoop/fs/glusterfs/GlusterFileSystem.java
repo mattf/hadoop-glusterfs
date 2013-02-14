@@ -419,8 +419,21 @@ public class GlusterFileSystem extends FileSystem {
 		Path absolute = makeAbsolute(path);
 		File f = new File(absolute.toUri().getPath());
 
-		if (!f.exists())
-			throw new IOException(f.getPath() + " does not exist.");
+		if (!f.exists()) {
+         // Theory is f actually exists but there is stale/cached
+         // information in the filesystem. So, walk the tree to force
+         // a filesystem refresh.
+         File diddle = f;
+         while (null != diddle && !diddle.exists()) {
+            diddle = new File(diddle.getParent());
+         }
+         if (null != diddle) {
+            diddle.listFiles();
+         }
+
+         if (!f.exists())
+            throw new IOException(f.getPath() + " does not exist.");
+      }
 
 		return f.length();
 	}
