@@ -70,6 +70,29 @@ public class GlusterFileSystem extends FileSystem {
         public URI getUri () {
                 return uri;
         }
+        
+        public void close() throws IOException {
+            String mountCmd = "umount " + this.glusterMount;
+            boolean ret = true;
+            int retVal = 0;
+            Process p = null;
+
+            try {
+                p = Runtime.getRuntime().exec(mountCmd);
+                retVal = p.waitFor();
+                if (retVal != 0)
+                    ret = false;
+
+            } catch (InterruptedException e) {
+                System.out.println("Problem unmounting FUSE : " + this.glusterMount);
+                e.printStackTrace();
+                System.exit(-1);
+
+            } finally {
+                super.close();
+            }
+
+        }
 
         public boolean FUSEMount (String volname, String server, String mount)
                 throws IOException, InterruptedException  {
@@ -80,7 +103,7 @@ public class GlusterFileSystem extends FileSystem {
                 String         mountCmd = null;
 
                 mountCmd = "mount -t glusterfs " + server + ":" + "/" + volname + " " + mount;
-
+                System.out.println("Running: " + mountCmd);
                 try {
                         p = Runtime.getRuntime().exec(mountCmd);
 
